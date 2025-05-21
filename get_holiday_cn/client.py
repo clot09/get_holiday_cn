@@ -1,12 +1,4 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-# @Time    : 2021/9/9 13:48
-# @Author  : Weiqiang.long
-# @Email   : 573925242@qq.com
-# @Site    : 
-# @File    : client.py
-# @Software: PyCharm
-# @Description: 获取github仓库的节假日json数据并存到本地文件中
+import datetime, requests, json, site, os
 
 
 """
@@ -30,7 +22,7 @@ interface Holidays {
   }[]
 }
 """
-import datetime, requests, json, site, os
+#增加本地cache缓存
 
 class YearKeyError(Exception):
     '''自定义异常：年份异常'''
@@ -52,7 +44,14 @@ class getHoliday(object):
 
     def __init__(self):
         pass
-
+    @staticmethod
+    def get_cache_dir():
+        # 当前执行目录下的 cache 目录
+        cache_dir = os.path.join(os.getcwd(), 'cache')
+        if not os.path.exists(cache_dir):
+            os.makedirs(cache_dir)
+        return cache_dir
+    
     @staticmethod
     def get_get_holiday_cn_path():
         try:
@@ -86,13 +85,26 @@ class getHoliday(object):
         :return:
         """
         try:
-            with open(self.get_get_holiday_cn_path() + f"{current_year}.json", 'r', encoding='utf-8') as f:
-                list_data = json.load(f)['days']
-                # 针对本地已有年份，但年份文件中是空列表的情况做特殊处理==>重新获取一次远程仓库文件
-                # https://github.com/longweiqiang/get_holiday_cn/issues/4
-                if len(list_data) == 0:
-                    return self.get_holiday_json(current_year=current_year)
-                return list_data
+            cache_dir = self.get_cache_dir()
+            file_path = os.path.join(cache_dir, f"{current_year}.json")
+            if not os.path.exists(file_path):
+                # print(2)
+                with open(self.get_get_holiday_cn_path() + f"{current_year}.json", 'r', encoding='utf-8') as f:
+                    # print(3)
+                    list_data = json.load(f)['days']
+                    # 针对本地已有年份，但年份文件中是空列表的情况做特殊处理==>重新获取一次远程仓库文件
+                    # https://github.com/longweiqiang/get_holiday_cn/issues/4
+                    if len(list_data) == 0:
+                        print(4)
+                        return self.get_holiday_json(current_year=current_year)
+                    return list_data
+            else:
+                # print(1)
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    list_data = json.load(f)['days']
+                    if len(list_data) == 0:
+                        return self.get_holiday_json(current_year=current_year)
+                    return list_data
         except:
             # return self.get_holiday_json(current_year=current_year)
             # Here we need to try to get the data instead of force get, because the remote repo may not have the data yet.
@@ -112,8 +124,10 @@ class getHoliday(object):
             # url = 'https://raw.githubusercontent.com/NateScarlet/holiday-cn/master/{year}.json'.format(year=current_year)
             res = requests.get(url=url, timeout=5)
             if res.status_code == 200:
+                cache_dir = self.get_cache_dir()
+                file_path = os.path.join(cache_dir, f"{current_year}.json")
                 try:
-                    with open(self.get_get_holiday_cn_path() + f"{current_year}.json", 'w', encoding='utf-8') as f:
+                    with open(file_path, 'w', encoding='utf-8') as f:
                         json.dump(res.json(), f, ensure_ascii=False, indent=4)
                 except FileNotFoundError:
                     with open(f"{current_year}.json", 'w', encoding='utf-8') as f:
@@ -127,8 +141,10 @@ class getHoliday(object):
                 if res.status_code == 404:
                     raise YearKeyError(current_year)
                 else:
+                    cache_dir = self.get_cache_dir()
+                    file_path = os.path.join(cache_dir, f"{current_year}.json")
                     try:
-                        with open(self.get_get_holiday_cn_path() + f"{current_year}.json", 'w',
+                        with open(file_path, 'w',
                                   encoding='utf-8') as f:
                             json.dump(res.json(), f, ensure_ascii=False, indent=4)
                     except FileNotFoundError:
@@ -145,8 +161,10 @@ class getHoliday(object):
                 if res.status_code == 404:
                     raise YearKeyError(current_year)
                 else:
+                    cache_dir = self.get_cache_dir()
+                    file_path = os.path.join(cache_dir, f"{current_year}.json")
                     try:
-                        with open(self.get_get_holiday_cn_path() + f"{current_year}.json", 'w',
+                        with open(file_path, 'w',
                                   encoding='utf-8') as f:
                             json.dump(res.json(), f, ensure_ascii=False, indent=4)
                     except FileNotFoundError:
@@ -286,9 +304,9 @@ if __name__ == '__main__':
     # print(getGithubHolidayJson.get_weekday_enum_cn(1))
     # print(g.get_get_holiday_cn_path())
     # 当天
-    print(g.assemble_holiday_data(today='2025-05-01'))
-    # print(g.assemble_holiday_data(today='2022-10-1'))
-    # print(g.get_local_holiday_json(current_year=2022))
+    # print(g.assemble_holiday_data(today='2025-05-01'))
+    # print(g.assemble_holiday_data(today='2017-10-1'))
+    print(g.get_local_holiday_json(current_year=2016))
     # for i in dateRange('2021-12-17','2022-12-29'):
     #     print(g.assemble_holiday_data(i))
     # print(g.get_today_data(today='2022-10-1', current_year=2022))
