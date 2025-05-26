@@ -190,7 +190,9 @@ class getHoliday(object):
         # 防止大于当前年份+2，造成查询仓库json返回404（仓库中最多只会存在当前年份+1的数据）
         if int(current_year) >= int(self.get_current_year()) + 1:
             current_year = self.get_current_year()
-        year_list = [int(current_year)-1, int(current_year), int(current_year)+1]
+        # year_list = [int(current_year)-1, int(current_year), int(current_year)+1]
+        # 去掉多余的年份
+        year_list = [int(current_year)-1, int(current_year)]
         # print(year_list)
         data_list = []
         for i in year_list:
