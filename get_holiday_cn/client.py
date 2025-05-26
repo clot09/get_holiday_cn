@@ -47,7 +47,9 @@ class getHoliday(object):
     @staticmethod
     def get_cache_dir():
         # 当前执行目录下的 cache 目录
-        cache_dir = os.path.join(os.getcwd(), 'cache')
+        # cache_dir = os.path.join(os.getcwd(), 'cache')
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        cache_dir = os.path.join(script_dir, 'cache')
         if not os.path.exists(cache_dir):
             os.makedirs(cache_dir)
         return cache_dir
